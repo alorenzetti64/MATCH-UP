@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a1020" />
+  <title>MATCH-UP · Suite SIR</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-lockup"><div class="brand-mark">SIR</div><div><div class="eyebrow">SUITE SIR · DATA ROOM STYLE</div><h1>MATCH-UP</h1></div></div>
+      <div class="status-pill" id="saveStatus">Locale</div>
+    </header>
+
+    <nav class="tabs" aria-label="Navigazione principale">
+      <button class="tab active" data-view="home">Home</button><button class="tab" data-view="data">Dati</button><button class="tab" data-view="teams">Squadre</button><button class="tab" data-view="match">Partita</button><button class="tab" data-view="quick">Domanda rapida</button>
+    </nav>
+
+    <main>
+      <section class="view active" id="view-home">
+        <div class="hero-card"><div class="hero-kicker">ROTATION INTELLIGENCE</div><h2>Vedi l’incrocio. Decidi prima.</h2><p>Prepara sestetti e rotazioni, sviluppa le 12 situazioni e trova in pochi tocchi la risposta utile in panchina.</p><div class="hero-badges"><span>12 situazioni</span><span>Ricerca inversa</span><span>Mobile first</span></div></div>
+        <div class="home-grid">
+          <button class="home-action primary" data-go="match"><span>＋</span><strong>Nuova partita</strong><small>Imposta squadre e partenza</small></button>
+          <button class="home-action" data-go="quick"><span>⚡</span><strong>Domanda rapida</strong><small>Dove saranno? Come partire?</small></button>
+          <button class="home-action" data-go="teams"><span>◎</span><strong>Squadre</strong><small>Roster e sestetti base</small></button>
+          <button class="home-action" data-go="data"><span>⇩</span><strong>Dati</strong><small>Stagioni, competizioni, import</small></button>
+        </div>
+      </section>
+
+      <section class="view" id="view-data">
+        <div class="section-head"><div><div class="eyebrow">ARCHIVIO</div><h2>Dati</h2></div><button class="btn" id="downloadTemplate">Scarica modello CSV</button></div>
+        <div class="metric-strip"><div class="metric"><span>STAGIONI</span><strong id="countSeasons">0</strong></div><div class="metric"><span>COMPETIZIONI</span><strong id="countCompetitions">0</strong></div><div class="metric"><span>SQUADRE</span><strong id="countTeams">0</strong></div><div class="metric"><span>GIOCATORI</span><strong id="countPlayers">0</strong></div></div>
+        <div class="data-grid">
+          <div class="panel"><div class="panel-title"><div><div class="eyebrow">1</div><h3>Stagioni</h3></div></div><div class="inline-form"><input id="seasonName" placeholder="es. 2026/27"><button class="btn primary" id="addSeason">Aggiungi</button></div><div id="seasonList" class="chip-list"></div></div>
+          <div class="panel"><div class="panel-title"><div><div class="eyebrow">2</div><h3>Competizioni</h3></div></div><div class="form-grid two"><label>Stagione<select id="competitionSeason"></select></label><label>Nome<input id="competitionName" placeholder="es. SuperLega"></label></div><button class="btn primary wide" id="addCompetition">Aggiungi competizione</button><div id="competitionList" class="chip-list"></div></div>
+        </div>
+        <div class="panel import-panel"><div class="section-head mini"><div><div class="eyebrow">IMPORT MASSIVO</div><h3>Carica squadre e giocatori da CSV</h3></div></div><p class="muted">Colonne richieste: <b>stagione, competizione, squadra, numero, nome, ruolo</b>. Un giocatore per riga.</p><div class="upload-drop"><input type="file" id="csvFile" accept=".csv,text/csv"><span>CSV</span><strong>Seleziona il file</strong><small>Separatore ; oppure ,</small></div><div id="importPreview" class="import-preview"></div><button class="btn primary wide hidden" id="confirmImport">IMPORTA DATI</button></div>
+        <div class="panel danger-zone"><div><h3>Archivio locale</h3><p class="muted">Questa V1 salva nel browser del dispositivo.</p></div><button class="btn danger" id="resetLocal">Reset dati locali</button></div>
+      </section>
+
+      <section class="view" id="view-teams">
+        <div class="section-head"><div><div class="eyebrow">ROSTER & LINEUP</div><h2>Squadre</h2></div><button class="btn primary" id="newTeamBtn">+ Nuova squadra</button></div>
+        <div class="filter-bar"><label>Stagione<select id="teamFilterSeason"></select></label><label>Competizione<select id="teamFilterCompetition"></select></label></div>
+        <div class="split-layout"><aside class="panel compact"><h3>Squadre salvate</h3><div id="teamsList" class="stack-list empty-state">Nessuna squadra salvata.</div></aside><div class="panel" id="teamEditor"><div class="empty-state">Crea o seleziona una squadra.</div></div></div>
+      </section>
+
+      <section class="view" id="view-match">
+        <div class="section-head"><div><div class="eyebrow">PREPARA</div><h2>Partita</h2></div></div>
+        <div class="panel"><div class="form-grid two"><label>Stagione<select id="matchSeasonSelect"></select></label><label>Competizione<select id="matchCompetitionSelect"></select></label></div><div class="form-grid two"><label>NOI<select id="ourTeamSelect"></select></label><label>LORO<select id="oppTeamSelect"></select></label></div><div class="lineup-pair" id="matchLineups"></div></div>
+        <div class="panel match-start-panel"><div class="panel-title"><div><div class="eyebrow">START</div><h3>Partenza</h3></div></div><div class="phase-row"><div class="side-label">NOI</div><div class="segmented" id="ourPhaseSegment"><button data-phase="serve" class="active">BATTUTA</button><button data-phase="receive">RICEZIONE</button></div></div><div class="rotation-picker" id="ourRotationPicker"></div><div class="phase-row"><div class="side-label">LORO</div><div class="opposite-label" id="oppPhaseLabel">RICEZIONE</div></div><div class="rotation-picker" id="oppRotationPicker"></div><button class="btn wide" id="invertStart">⇄ INVERTI BATTUTA / RICEZIONE</button><button class="btn primary wide big" id="generateCycle">GENERA MATCH-UP</button></div>
+        <div class="panel hidden" id="cyclePanel"><div class="section-head mini"><div><div class="eyebrow">SVILUPPO COMPLETO</div><h3 id="cycleTitle">12 situazioni</h3></div></div><div id="cycleList" class="cycle-list"></div></div>
+      </section>
+
+      <section class="view" id="view-quick">
+        <div class="section-head"><div><div class="eyebrow">LIVE</div><h2>Domanda rapida</h2></div></div>
+        <div class="quick-mode-tabs"><button class="quick-mode active" data-mode="where">Dove saranno?</button><button class="quick-mode" data-mode="inverse">Come devo partire?</button><button class="quick-mode" data-mode="cycle">Se partiamo così</button></div>
+        <div class="panel" id="quickWherePanel"><div class="current-start" id="currentStartSummary">Imposta prima una partita.</div><h3>Quando noi saremo…</h3><div class="segmented small" id="queryPhaseSegment"><button data-phase="serve">BATTUTA</button><button data-phase="receive" class="active">RICEZIONE</button></div><div class="rotation-picker" id="queryRotationPicker"></div><div class="answer-card" id="whereAnswer"><span>RISPOSTA</span><strong>—</strong></div></div>
+        <div class="panel hidden" id="quickInversePanel"><h3>Voglio ottenere</h3><div class="form-grid two"><div><div class="side-label">NOI</div><div class="segmented small" id="desiredOurPhase"><button data-phase="serve">BATTUTA</button><button data-phase="receive" class="active">RICEZIONE</button></div><div class="rotation-picker" id="desiredOurRotation"></div></div><div><div class="side-label">LORO</div><div class="opposite-label" id="desiredOppPhaseLabel">BATTUTA</div><div class="rotation-picker" id="desiredOppRotation"></div></div></div><hr><h3>Loro partono</h3><div class="segmented small" id="oppStartPhaseForInverse"><button data-phase="serve" class="active">BATTUTA</button><button data-phase="receive">RICEZIONE</button></div><div class="rotation-picker" id="oppStartRotationForInverse"></div><button class="btn primary wide" id="solveInverse">CALCOLA PARTENZA</button><div class="answer-card" id="inverseAnswer"><span>DEVI PARTIRE</span><strong>—</strong></div></div>
+        <div class="panel hidden" id="quickCyclePanel"><p class="muted">Usa la partenza corrente e mostra immediatamente le 12 situazioni.</p><button class="btn primary wide" id="quickShowCycle">MOSTRA LE 12</button><div id="quickCycleList" class="cycle-list"></div></div>
+      </section>
+    </main>
+  </div>
+  <dialog id="teamDialog"><form method="dialog" id="teamDialogForm"><h3>Nuova squadra</h3><div class="form-grid two"><label>Stagione<select id="newTeamSeason"></select></label><label>Competizione<select id="newTeamCompetition"></select></label></div><label>Nome squadra<input id="newTeamName" required maxlength="60"></label><div class="dialog-actions"><button class="btn" value="cancel">Annulla</button><button class="btn primary" value="default" id="confirmNewTeam">Crea</button></div></form></dialog>
+  <script src="app.js"></script>
+</body>
+</html>

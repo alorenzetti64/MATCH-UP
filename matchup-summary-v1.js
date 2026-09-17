@@ -1,53 +1,90 @@
-// MATCH-UP · sintesi semplice + proiezione grezza del set
+// MATCH-UP · sintesi operativa: migliore/peggiore + tipo battuta + proiezione set
 (function(){
   const ENGINE='https://kwgfexwujbsrhqpwkrtt.supabase.co/functions/v1/matchup-engine';
-  const ROTS=['P1','P6','P5','P4','P3','P2'];
   let cache=null,cacheKey='';
 
   function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-  function t(id){return state.teams.find(x=>x.id===id)}
-  function s(id){return state.seasons.find(x=>x.id===id)}
-  function numbers(team,lineup){const out={};for(const slot of ['P','S1','C2','O','S2','C1','L']){const p=team?.roster?.find(x=>x.id===lineup?.[slot]);out[slot]=p?.number||''}return out}
-  function complete(team,lineup){const n=numbers(team,lineup);return ['P','S1','C2','O','S2','C1'].every(k=>n[k]!=='')}
-  async function engine(){
-    const us=t(state.match.ourTeamId),them=t(state.match.oppTeamId);
+  function team(id){return state.teams.find(x=>x.id===id)}
+  function season(id){return state.seasons.find(x=>x.id===id)}
+  function numbers(t,lineup){const out={};for(const slot of ['P','S1','C2','O','S2','C1','L']){const p=t?.roster?.find(x=>x.id===lineup?.[slot]);out[slot]=p?.number||''}return out}
+  function complete(t,lineup){const n=numbers(t,lineup);return ['P','S1','C2','O','S2','C1'].every(k=>n[k]!=='')}
+  function playerByNumber(t,n){const s=String(n??'').replace(/^0+/,'');return t?.roster?.find(p=>String(p.number??'').replace(/^0+/,'')===s)}
+  function playerName(t,n){const p=playerByNumber(t,n);return p?`${p.number?'#'+p.number+' ':''}${p.name}`:`#${String(n).replace(/^0+/,'')}`}
+  function mixStore(){state.match=state.match||{};state.match.serveMix=state.match.serveMix||{};return state.match.serveMix}
+
+  async function callEngine(){
+    const us=team(state.match.ourTeamId),them=team(state.match.oppTeamId);
     if(!us||!them)throw new Error('Scegli prima entrambe le squadre.');
     if(!complete(us,state.match.ourLineup)||!complete(them,state.match.oppLineup))throw new Error('Completa prima i due sestetti.');
-    if(!String(s(state.match.seasonId)?.name||'').includes('2025'))throw new Error('Per questo test seleziona 2025/26.');
-    const payload={our_team:us.name,opp_team:them.name,our_lineup:numbers(us,state.match.ourLineup),opp_lineup:numbers(them,state.match.oppLineup)};
-    const key=JSON.stringify(payload);if(cache&&key===cacheKey)return cache;
+    if(!String(season(state.match.seasonId)?.name||'').includes('2025'))throw new Error('Per questo test seleziona 2025/26.');
+    const payload={our_team:us.name,opp_team:them.name,our_lineup:numbers(us,state.match.ourLineup),opp_lineup:numbers(them,state.match.oppLineup),serve_mix:mixStore()};
+    const key=JSON.stringify(payload);if(cache&&cacheKey===key)return cache;
     const r=await fetch(ENGINE,{method:'POST',headers:{'Content-Type':'application/json'},body:key});
     const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error('Il motore statistico non risponde in questo momento.');
     cache=d;cacheKey=key;return d;
   }
-  function mapRot(a){return Object.fromEntries((a||[]).map(x=>[x.rotation,x]))}
-  function pct(v){return v==null?'—':v.toFixed(1)+'%'}
-  function edgeToP(phase,our,opp){
-    if(phase==='serve'){
-      if(our?.break_pct==null||opp?.so_pct==null)return null;
-      return Math.max(0,Math.min(1,((our.break_pct+(100-opp.so_pct))/2)/100));
+
+  async function askMixedIfNeeded(d){
+    const store=mixStore();let changed=false;
+    const sides=[['our',d.our_team,team(state.match.ourTeamId)],['opp',d.opp_team,team(state.match.oppTeamId)]];
+    for(const [side,apiTeam,localTeam] of sides){
+      const profs=d.serve_profiles?.[side]||{};
+      for(const p of Object.values(profs)){
+        if(p.classification!=='mixed')continue;
+        const key=`${apiTeam.id}:${p.number}`;if(store[key]!=null)continue;
+        const def=Math.round(p.spin_pct||50),name=playerName(localTeam,p.number);
+        const raw=prompt(`${name} alterna SPIN e FLOAT.\nChe percentuale di battute SPIN vuoi considerare?\n\nInserisci un numero da 0 a 100.`,String(def));
+        if(raw===null)continue;
+        const v=Math.max(0,Math.min(100,Number(String(raw).replace(',','.'))));
+        if(Number.isFinite(v)){store[key]=v;changed=true;}
+      }
     }
-    if(our?.so_pct==null||opp?.break_pct==null)return null;
-    return Math.max(0,Math.min(1,((our.so_pct+(100-opp.break_pct))/2)/100));
+    if(changed){save();cache=null;cacheKey='';return await callEngine();}
+    return d;
   }
-  function projection(p){
-    if(p==null)return '—';
-    if(Math.abs(p-.5)<.012)return 'SET DA VANTAGGI';
-    if(p>.5){let l=Math.round(25*(1-p)/p);l=Math.max(10,Math.min(23,l));return `25-${l}`}
-    let l=Math.round(25*p/(1-p));l=Math.max(10,Math.min(23,l));return `${l}-25`;
+
+  function styleText(st){
+    const p=st?.server_profile;if(!p)return 'tipo di battuta non disponibile';
+    if(p.classification==='spin')return 'SPIN';
+    if(p.classification==='float')return 'FLOAT';
+    if(p.classification==='mixed')return `${Math.round((st.receiver_detail?.spin_weight??.5)*100)}% SPIN · ${100-Math.round((st.receiver_detail?.spin_weight??.5)*100)}% FLOAT`;
+    return 'tipo di battuta non disponibile';
   }
-  function labelPhase(p){return p==='serve'?'BATTUTA':'RICEZIONE'}
+
+  function note(pair,d){
+    const st=pair?.states?.[0];if(!st)return 'Dati insufficienti per spiegare questo incrocio.';
+    const serverTeam=st.server_side==='our'?team(state.match.ourTeamId):team(state.match.oppTeamId);
+    const receivingName=st.server_side==='our'?d.opp_team.name:d.our_team.name;
+    const srv=playerName(serverTeam,st.server_number),kind=styleText(st);
+    const so=st.receiver_so==null?'—':st.receiver_so.toFixed(1)+'%';
+    const fav=pair.favorable_states??0,used=pair.states_used??12;
+    const weighted=st.fallback_used?'Il dato specifico per tipo di battuta è scarso, quindi il modello integra il dato generale di rotazione.':'Il Side Out di ricezione è costruito sui singoli ricevitori, pesati per quante battute hanno realmente ricevuto contro quel tipo di servizio.';
+    return `Parte al servizio ${srv}, con ${kind}. In questa rotazione ${receivingName} produce un Side Out stimato del ${so}. ${weighted} Nello sviluppo del set risultano favorevoli ${fav} situazioni su ${used}.`;
+  }
+
+  function card(title,pair,phase,d,kind){
+    if(!pair)return '';
+    const line=phase==='serve'
+      ?`NOI dobbiamo battere in <b>${pair.our_rotation}</b> · LORO ricevere in <b>${pair.opp_rotation}</b>`
+      :`NOI dobbiamo ricevere in <b>${pair.our_rotation}</b> · LORO battere in <b>${pair.opp_rotation}</b>`;
+    return `<div class="current-start" style="padding:16px;margin-top:12px;border:${kind==='best'?'1px solid #789904':'1px solid #7b3d45'}">
+      <div class="eyebrow">${title}</div>
+      <div style="font-size:1.25rem;font-weight:800;margin-top:5px">${line}</div>
+      <div style="margin-top:10px"><b>PROIEZIONE SET:</b> <span style="font-size:1.25rem;font-weight:800">${esc(pair.projected_score||'—')}</span></div>
+      <p style="margin:10px 0 0"><b>Nota AI:</b> ${esc(note(pair,d))}</p>
+    </div>`;
+  }
 
   async function conciseBest(phase){
     const box=document.querySelector('#bestAnswer');if(!box)return;
-    box.innerHTML='<span>RISPOSTA</span><strong>Calcolo…</strong>';
+    box.innerHTML='<span>RISPOSTA</span><strong>Calcolo sui dati 2025/26…</strong>';
     try{
-      const d=await engine();
-      const rows=ROTS.map(or=>{
-        const a=(d.all?.[phase]||[]).filter(x=>x.opp_rotation===or&&x.value!=null).sort((x,y)=>y.value-x.value);
-        return a[0]||{opp_rotation:or,our_rotation:'—',value:null};
-      });
-      box.innerHTML=`<span>LETTURA SEMPLICE</span><strong style="font-size:1.15rem">Se loro partono così, noi partiremo così</strong><div style="display:grid;gap:8px;margin-top:12px">${rows.map(r=>`<div class="current-start" style="display:flex;justify-content:space-between;gap:12px;align-items:center"><b>LORO ${r.opp_rotation}</b><span style="font-size:1.05rem">→ NOI <b>${r.our_rotation}</b></span></div>`).join('')}</div><details style="margin-top:10px"><summary>Vedi indice statistico</summary><div style="display:grid;gap:6px;margin-top:8px">${rows.map(r=>`<small>Loro ${r.opp_rotation} → Noi ${r.our_rotation}: indice ${r.value==null?'—':(r.value>=0?'+':'')+r.value.toFixed(1)}</small>`).join('')}</div></details>`;
+      let d=await callEngine();d=await askMixedIfNeeded(d);
+      const best=d.best?.[phase],worst=d.worst?.[phase];
+      box.innerHTML=`<span>${phase==='serve'?'PARTENZA IN BATTUTA':'PARTENZA IN RICEZIONE'}</span>
+        ${card('MIGLIOR MATCH-UP',best,phase,d,'best')}
+        ${card('PEGGIOR MATCH-UP',worst,phase,d,'worst')}
+        <small style="display:block;margin-top:12px">La proiezione del set è indicativa: usa i 12 passaggi del match-up e i rendimenti storici 2025/26. Non è una previsione certa del punteggio.</small>`;
     }catch(err){box.innerHTML=`<span>RISPOSTA</span><strong>${esc(err.message)}</strong>`}
   }
 
@@ -55,34 +92,13 @@
     const q=state.match.simple,root=document.querySelector('#smCycleAnswer');if(!root)return;
     root.innerHTML='<p class="muted">Calcolo…</p>';
     try{
-      const d=await engine(),om=mapRot(d.our_team.rotations),tm=mapRot(d.opp_team.rotations);
-      const cyc=cycle(q.askOurPhase,q.askOurRotation,q.askOppRotation);
-      const rows=cyc.map(x=>{
-        const o=om[x.ourRotation],p=tm[x.oppRotation],win=edgeToP(x.ourPhase,o,p);
-        let detail='';
-        if(x.ourPhase==='serve')detail=`BP noi ${pct(o?.break_pct)} · SO loro ${pct(p?.so_pct)}`;
-        else detail=`SO noi ${pct(o?.so_pct)} · BP loro ${pct(p?.break_pct)}`;
-        return {...x,win,detail};
-      });
-      const valid=rows.filter(x=>x.win!=null),avg=valid.length?valid.reduce((a,x)=>a+x.win,0)/valid.length:null;
-      const pos=valid.filter(x=>x.win>.5).length;
-      const sorted=[...valid].sort((a,b)=>b.win-a.win),best=sorted[0],worst=sorted[sorted.length-1];
-      const score=projection(avg);
-      const reading=avg==null?'Dati insufficienti':Math.abs(avg-.5)<.012?'Equilibrio quasi totale':avg>.5?'Incrocio complessivamente favorevole':'Incrocio complessivamente sfavorevole';
-      root.innerHTML=`
-        <div class="answer-card" style="margin-bottom:12px">
-          <span>LETTURA RAPIDA</span>
-          <strong style="font-size:1.35rem">${reading}</strong>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:12px">
-            <div class="current-start"><b>PROIEZIONE SET</b><br><span style="font-size:1.35rem;font-weight:800">${score}</span></div>
-            <div class="current-start"><b>INCROCI A FAVORE</b><br><span style="font-size:1.35rem;font-weight:800">${pos}/${valid.length||12}</span></div>
-            <div class="current-start"><b>INDICE MEDIO</b><br><span style="font-size:1.35rem;font-weight:800">${avg==null?'—':(avg*100).toFixed(1)+'%'}</span></div>
-          </div>
-          ${best?`<p style="margin:12px 0 0"><b>Momento migliore:</b> NOI ${best.ourRotation} ${labelPhase(best.ourPhase)} contro LORO ${best.oppRotation}.</p>`:''}
-          ${worst?`<p style="margin:5px 0 0"><b>Momento più delicato:</b> NOI ${worst.ourRotation} ${labelPhase(worst.ourPhase)} contro LORO ${worst.oppRotation}.</p>`:''}
-          <small style="display:block;margin-top:10px">La proiezione del set è volutamente “a spanne”: traduce i 12 incroci in un punteggio indicativo. Non è una previsione del risultato.</small>
-        </div>
-        <details><summary><b>Vedi le 12 situazioni nel dettaglio</b></summary><div class="cycle-list" style="margin-top:10px">${rows.map(x=>`<div class="cycle-row-rich"><div class="cycle-top"><div class="cycle-num">${x.n}</div><div class="state-chip ${x.ourPhase}">NOI ${labelPhase(x.ourPhase)} ${x.ourRotation}</div><div class="arrow">↔</div><div class="state-chip ${x.oppPhase}">LORO ${labelPhase(x.oppPhase)} ${x.oppRotation}</div></div><div class="cycle-detail"><div><b>LETTURA</b><span>${x.detail}</span></div><div><b>INDICE PUNTO</b><span>${x.win==null?'—':(x.win*100).toFixed(1)+'%'}</span></div></div></div>`).join('')}</div></details>`;
+      let d=await callEngine();d=await askMixedIfNeeded(d);
+      const pair=(d.all?.[q.askOurPhase]||[]).find(x=>x.our_rotation===q.askOurRotation&&x.opp_rotation===q.askOppRotation);
+      if(!pair)throw new Error('Non trovo questo incrocio.');
+      const line=q.askOurPhase==='serve'
+        ?`NOI battiamo in ${pair.our_rotation} · LORO ricevono in ${pair.opp_rotation}`
+        :`NOI riceviamo in ${pair.our_rotation} · LORO battono in ${pair.opp_rotation}`;
+      root.innerHTML=`<div class="answer-card"><span>SE PARTIAMO COSÌ</span><strong style="font-size:1.25rem">${line}</strong><div style="margin-top:10px"><b>PROIEZIONE SET:</b> <span style="font-size:1.3rem;font-weight:800">${esc(pair.projected_score||'—')}</span></div><p style="margin:10px 0 0"><b>Nota AI:</b> ${esc(note(pair,d))}</p></div>`;
     }catch(err){root.innerHTML=`<p class="muted">${esc(err.message)}</p>`}
   }
 

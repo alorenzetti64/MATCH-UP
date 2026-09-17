@@ -10,7 +10,7 @@
 <body>
   <div class="app-shell">
     <header class="topbar">
-      <div class="brand-lockup"><div class="brand-mark">SIR</div><div><div class="eyebrow">SUITE SIR · DATA ROOM STYLE</div><h1>MATCH-UP</h1></div></div>
+      <div class="brand-lockup"><div class="brand-mark">SIR</div><div><div class="eyebrow">SUITE SIR · ROTATION INTELLIGENCE</div><h1>MATCH-UP</h1></div></div>
       <div class="status-pill" id="saveStatus">Locale</div>
     </header>
 
@@ -48,7 +48,7 @@
 
       <section class="view" id="view-match">
         <div class="section-head"><div><div class="eyebrow">PREPARA</div><h2>Partita</h2></div></div>
-        <div class="panel"><div class="form-grid two"><label>Stagione<select id="matchSeasonSelect"></select></label><label>Competizione<select id="matchCompetitionSelect"></select></label></div><div class="form-grid two"><label>NOI<select id="ourTeamSelect"></select></label><label>LORO<select id="oppTeamSelect"></select></label></div><p class="muted"><b>Sestetto partita:</b> scegli P, S1, C2, O, S2, C1 e L. Il libero entra automaticamente al posto del centrale di seconda linea; il centrale resta in zona 1 quando è il battitore.</p><div class="lineup-pair" id="matchLineups"></div></div>
+        <div class="panel"><div class="form-grid two"><label>Stagione<select id="matchSeasonSelect"></select></label><label>Competizione<select id="matchCompetitionSelect"></select></label></div><div class="form-grid two"><label>NOI<select id="ourTeamSelect"></select></label><label>LORO<select id="oppTeamSelect"></select></label></div><p class="muted match-rule-note"><b>Sestetto partita:</b> scegli P, S1, C2, O, S2, C1 e L. Il libero entra automaticamente al posto del centrale di seconda linea; il centrale resta in zona 1 quando è il battitore.</p><div class="lineup-pair" id="matchLineups"></div></div>
         <div class="panel match-start-panel"><div class="panel-title"><div><div class="eyebrow">START</div><h3>Partenza</h3></div></div><div class="phase-row"><div class="side-label">NOI</div><div class="segmented" id="ourPhaseSegment"><button data-phase="serve" class="active">BATTUTA</button><button data-phase="receive">RICEZIONE</button></div></div><div class="rotation-picker" id="ourRotationPicker"></div><div class="phase-row"><div class="side-label">LORO</div><div class="opposite-label" id="oppPhaseLabel">RICEZIONE</div></div><div class="rotation-picker" id="oppRotationPicker"></div><button class="btn wide" id="invertStart">⇄ INVERTI BATTUTA / RICEZIONE</button><button class="btn primary wide big" id="generateCycle">GENERA MATCH-UP</button></div>
         <div class="panel hidden" id="cyclePanel"><div class="section-head mini"><div><div class="eyebrow">SVILUPPO COMPLETO</div><h3 id="cycleTitle">12 situazioni</h3></div></div><div id="cycleList" class="cycle-list"></div></div>
       </section>

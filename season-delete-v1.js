@@ -55,4 +55,20 @@
   `;
   document.head.appendChild(style);
   renderData();
+
+  // Corregge il vecchio timer di avvio che poteva riportare l'etichetta a "Locale"
+  // anche dopo una connessione cloud riuscita. Verifica davvero il cloud e mostra lo stato reale.
+  setTimeout(async()=>{
+    const pin=localStorage.getItem('sir_matchup_cloud_pin')||'';
+    if(!pin)return;
+    const el=document.querySelector('#saveStatus');
+    try{
+      const r=await fetch('https://rwfxsbxxykocdcqphfvb.supabase.co/functions/v1/matchup-state',{
+        method:'GET',headers:{'x-matchup-pin':pin}
+      });
+      if(el)el.textContent=r.ok?'Cloud':'Offline';
+    }catch(e){
+      if(el)el.textContent='Offline';
+    }
+  },1400);
 })();

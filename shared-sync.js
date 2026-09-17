@@ -55,7 +55,7 @@
     }
     badge('Connessione…');
     try{
-      let remote=await request('GET',pin);
+      const remote=await request('GET',pin);
       localStorage.setItem(PIN_KEY,pin);
       if(remote.payload && typeof remote.payload==='object'){
         state={...clone(blank),...remote.payload,
@@ -71,9 +71,11 @@
       cloudReady=true;
       badge('Cloud');
 
-      const oldSave=save;
+      // Da questo momento il salvataggio locale resta come copia di sicurezza,
+      // ma lo stato mostrato all'utente resta quello reale del cloud.
       save=function(){
-        oldSave();
+        localStorage.setItem(STATE_KEY,JSON.stringify(state));
+        badge('Salvataggio…');
         schedulePush();
       };
 

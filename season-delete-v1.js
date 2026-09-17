@@ -56,8 +56,6 @@
   document.head.appendChild(style);
   renderData();
 
-  // Corregge il vecchio timer di avvio che poteva riportare l'etichetta a "Locale"
-  // anche dopo una connessione cloud riuscita. Verifica davvero il cloud e mostra lo stato reale.
   setTimeout(async()=>{
     const pin=localStorage.getItem('sir_matchup_cloud_pin')||'';
     if(!pin)return;
@@ -71,9 +69,4 @@
       if(el)el.textContent='Offline';
     }
   },1400);
-
-  // Primo test con dati scout reali 2025/26.
-  const testScript=document.createElement('script');
-  testScript.src='real-match-test-v1.js';
-  document.body.appendChild(testScript);
 })();

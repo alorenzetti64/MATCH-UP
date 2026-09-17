@@ -1,4 +1,4 @@
-// MATCH-UP v4: sestetto partita + gestione libero
+// MATCH-UP v4: sestetto partita + gestione libero + contesto indici
 (function(){
   const emptyLineup=()=>Object.fromEntries(SLOTS.map(s=>[s,'']));
   if(!state.match.ourLineup) state.match.ourLineup=emptyLineup();
@@ -53,6 +53,18 @@
     }).join('')}</div>`;
   }
 
+  function activePlayersHtml(t,r,phase,lu){
+    if(!t)return'';
+    const c=effectiveCourt(t,r,phase,lu);
+    const rows=[4,3,2,5,6,1].map(z=>c.pos[z]).filter(Boolean);
+    return `<div class="effective-six"><span>IN CAMPO</span>${rows.map(x=>`<b>${x.slot} · ${esc(playerLabel(t,x.playerId))}</b>`).join('')}</div>`;
+  }
+
+  function metricsHtml(phase){
+    const active=phase==='receive'?'SO':'BP';
+    return `<div class="match-metrics"><div class="match-metric ${active==='SO'?'active':''}"><span>SIDE OUT</span><strong>—</strong></div><div class="match-metric ${active==='BP'?'active':''}"><span>BREAK POINT</span><strong>—</strong></div></div><div class="stats-pending">Indici individuali non ancora collegati. Nessun valore viene stimato o inventato.</div>`;
+  }
+
   teamEditorHtml=function(t){return `<div class="team-head"><div><div class="eyebrow">${esc(season(t.seasonId)?.name||'')} · ${esc(comp(t.competitionId)?.name||'')}</div><h3>${esc(t.name)}</h3></div><button class="btn danger" id="deleteTeam">Elimina</button></div><h3>Roster</h3><p class="muted">Qui gestisci solo i giocatori disponibili. Il sestetto viene scelto ogni volta nella pagina Partita.</p><div class="player-form"><input id="pNum" placeholder="#"><input id="pName" placeholder="Nome e cognome"><select id="pRole"><option>S</option><option>OP</option><option>OH</option><option>MB</option><option>L</option></select><button class="btn primary" id="addPlayer">Aggiungi</button></div><div id="rosterWrap"></div>`};
 
   bindTeamEditor=function(t){
@@ -70,7 +82,7 @@
     for(const [label,t,r,phase,side] of data){
       const card=document.createElement('div');
       card.className='lineup-card';
-      card.innerHTML=`<div class="lineup-card-head"><div><h4>${label}${t?' · '+esc(t.name):''}</h4><small>SESTETTO PARTITA</small></div></div>${lineupEditor(t,side)}${t?courtHtml(t,r,phase,lineupFor(side)):''}`;
+      card.innerHTML=`<div class="lineup-card-head"><div><h4>${label}${t?' · '+esc(t.name):''}</h4><small>SESTETTO PARTITA</small></div></div>${lineupEditor(t,side)}${t?courtHtml(t,r,phase,lineupFor(side))+activePlayersHtml(t,r,phase,lineupFor(side))+metricsHtml(phase):''}`;
       matchLineups.appendChild(card);
     }
     matchLineups.querySelectorAll('select[data-match-side]').forEach(sel=>sel.onchange=()=>{
@@ -106,7 +118,9 @@
     root.innerHTML=c.map(x=>{
       const ac=effectiveCourt(a,x.ourRotation,x.ourPhase,state.match.ourLineup);
       const bc=effectiveCourt(b,x.oppRotation,x.oppPhase,state.match.oppLineup);
-      return `<div class="cycle-row-rich"><div class="cycle-top"><div class="cycle-num">${x.n}</div><div class="state-chip ${x.ourPhase}">NOI ${SHORT[x.ourPhase]} ${x.ourRotation}</div><div class="arrow">${x.ourPhase==='serve'?'→':'←'}</div><div class="state-chip ${x.oppPhase}">LORO ${SHORT[x.oppPhase]} ${x.oppRotation}</div></div><div class="cycle-detail"><div><b>NOI DAVANTI</b><span>${ac?ac.front.map(y=>y.slot+(y.player?.number?' #'+y.player.number:'')).join(' · '):'—'}</span></div><div><b>LORO DAVANTI</b><span>${bc?bc.front.map(y=>y.slot+(y.player?.number?' #'+y.player.number:'')).join(' · '):'—'}</span></div><div><b>BATTITORE</b><span>${x.ourPhase==='serve'?(ac?playerLabel(a,ac.server.playerId):'—'):(bc?playerLabel(b,bc.server.playerId):'—')}</span></div></div></div>`;
+      const aSix=ac?[4,3,2,5,6,1].map(z=>ac.pos[z]).filter(Boolean):[];
+      const bSix=bc?[4,3,2,5,6,1].map(z=>bc.pos[z]).filter(Boolean):[];
+      return `<div class="cycle-row-rich"><div class="cycle-top"><div class="cycle-num">${x.n}</div><div class="state-chip ${x.ourPhase}">NOI ${SHORT[x.ourPhase]} ${x.ourRotation}</div><div class="arrow">${x.ourPhase==='serve'?'→':'←'}</div><div class="state-chip ${x.oppPhase}">LORO ${SHORT[x.oppPhase]} ${x.oppRotation}</div></div><div class="cycle-detail"><div><b>NOI IN CAMPO</b><span>${aSix.length?aSix.map(y=>y.slot+(y.player?.number?' #'+y.player.number:'')).join(' · '):'—'}</span></div><div><b>LORO IN CAMPO</b><span>${bSix.length?bSix.map(y=>y.slot+(y.player?.number?' #'+y.player.number:'')).join(' · '):'—'}</span></div><div><b>BATTITORE</b><span>${x.ourPhase==='serve'?(ac?playerLabel(a,ac.server.playerId):'—'):(bc?playerLabel(b,bc.server.playerId):'—')}</span></div><div><b>INDICE FASE</b><span>${x.ourPhase==='serve'?'BREAK POINT':'SIDE OUT'} · —</span></div></div></div>`;
     }).join('');
   };
 
@@ -130,7 +144,16 @@
     .lineup-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
     .lineup-card-head small{color:#8799ad;font-weight:900;letter-spacing:.12em}
     .mini-court-grid small{display:inline;font-size:10px;color:#f0c41d;font-weight:800}
-    @media(max-width:760px){.match-lineup-editor{grid-template-columns:1fr}.lineup-pair{grid-template-columns:1fr}}
+    .effective-six{display:grid;gap:6px;margin-top:14px;padding:12px;border:1px solid #20354b;border-radius:12px;background:#091523}
+    .effective-six>span{font-size:10px;color:#87a4bf;font-weight:900;letter-spacing:.12em}
+    .effective-six b{font-size:12px;font-weight:800}
+    .match-metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+    .match-metric{padding:12px;border:1px solid #20354b;border-radius:12px;background:#091523}
+    .match-metric span{display:block;font-size:10px;color:#87a4bf;font-weight:900;letter-spacing:.1em}
+    .match-metric strong{display:block;font-size:24px;margin-top:4px}
+    .match-metric.active{outline:2px solid #f0c41d;outline-offset:-2px}
+    .stats-pending{margin-top:8px;font-size:11px;color:#8799ad;line-height:1.35}
+    @media(max-width:760px){.match-lineup-editor{grid-template-columns:1fr}.lineup-pair{grid-template-columns:1fr}.match-metrics{grid-template-columns:1fr 1fr}}
   `;
   document.head.appendChild(style);
 
@@ -138,11 +161,6 @@
   if(homeTeams)homeTeams.textContent='Roster giocatori';
   const teamsEyebrow=document.querySelector('#view-teams .eyebrow');
   if(teamsEyebrow)teamsEyebrow.textContent='ROSTER';
-  const panel=document.querySelector('#view-match .panel');
-  if(panel && !panel.querySelector('.match-rule-note')){
-    const note=document.createElement('p');note.className='muted match-rule-note';note.innerHTML='<b>Sestetto partita:</b> scegli P, S1, C2, O, S2, C1 e L. Il libero entra automaticamente al posto del centrale di seconda linea; il centrale resta in zona 1 quando è il battitore.';
-    panel.insertBefore(note,matchLineups);
-  }
 
   save();renderTeams();renderMatch();
 })();

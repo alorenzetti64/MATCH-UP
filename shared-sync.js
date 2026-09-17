@@ -2,6 +2,7 @@
 (function(){
   const STATE_KEY='sir_matchup_web_v3';
   const PIN_KEY='sir_matchup_cloud_pin';
+  const DEFAULT_PIN='94675708';
   const API='https://rwfxsbxxykocdcqphfvb.supabase.co/functions/v1/matchup-state';
   let cloudReady=false;
   let syncing=false;
@@ -27,10 +28,16 @@
     try{renderData();renderTeams();renderMatch();renderQuick()}catch(e){console.warn(e)}
   }
 
+  function currentPin(){
+    const stored=localStorage.getItem(PIN_KEY);
+    if(stored) return stored;
+    localStorage.setItem(PIN_KEY,DEFAULT_PIN);
+    return DEFAULT_PIN;
+  }
+
   async function pushNow(){
     if(!cloudReady||syncing)return;
-    const pin=localStorage.getItem(PIN_KEY)||'';
-    if(!pin)return;
+    const pin=currentPin();
     syncing=true;
     badge('Salvataggio…');
     try{
@@ -48,15 +55,10 @@
   }
 
   async function connect(){
-    let pin=localStorage.getItem(PIN_KEY)||'';
-    if(!pin){
-      pin=prompt('Inserisci il codice MATCH-UP per collegare il database condiviso:')||'';
-      if(!pin){badge('Locale');return}
-    }
+    const pin=currentPin();
     badge('Connessione…');
     try{
       const remote=await request('GET',pin);
-      localStorage.setItem(PIN_KEY,pin);
       if(remote.payload && typeof remote.payload==='object'){
         state={...clone(blank),...remote.payload,
           filters:{...blank.filters,...(remote.payload.filters||{})},
@@ -86,8 +88,7 @@
     }catch(e){
       if(e.message==='PIN'){
         localStorage.removeItem(PIN_KEY);
-        badge('Codice errato');
-        alert('Codice MATCH-UP non corretto. Ricarica la pagina e riprova.');
+        badge('Codice cloud non valido');
       }else{
         console.error('MATCH-UP cloud connect',e);
         badge('Offline');

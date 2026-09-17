@@ -71,4 +71,9 @@
       if(el)el.textContent='Offline';
     }
   },1400);
+
+  // Primo test con dati scout reali 2025/26.
+  const testScript=document.createElement('script');
+  testScript.src='real-match-test-v1.js';
+  document.body.appendChild(testScript);
 })();

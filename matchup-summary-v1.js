@@ -10,7 +10,17 @@
   function complete(t,lineup){const n=numbers(t,lineup);return ['P','S1','C2','O','S2','C1'].every(k=>n[k]!=='')}
   function playerByNumber(t,n){const s=String(n??'').replace(/^0+/,'');return t?.roster?.find(p=>String(p.number??'').replace(/^0+/,'')===s)}
   function playerName(t,n){const p=playerByNumber(t,n);return p?`${p.number?'#'+p.number+' ':''}${p.name}`:`#${String(n).replace(/^0+/,'')}`}
-  function mixStore(){state.match=state.match||{};state.match.serveMix=state.match.serveMix||{};return state.match.serveMix}
+
+  function mixStore(){
+    state.match=state.match||{};
+    if(state.match.serveMixUiVersion!==2){
+      state.match.serveMix={};
+      state.match.serveMixUiVersion=2;
+      try{save()}catch(_){ }
+    }
+    state.match.serveMix=state.match.serveMix||{};
+    return state.match.serveMix;
+  }
 
   function ensureMixModal(){
     if(document.querySelector('#serveMixModal'))return;
@@ -22,30 +32,32 @@
         <div class="serve-mix-kicker">TIPO DI BATTUTA</div>
         <h3 id="serveMixTitle">Battuta alternata</h3>
         <p id="serveMixText" class="serve-mix-text"></p>
-        <div class="serve-mix-value"><span id="serveMixSpinValue">50</span><small>% SPIN</small></div>
+        <div class="serve-mix-split">
+          <div class="serve-mix-box"><span id="serveMixSpinValue">50%</span><small>SPIN</small></div>
+          <div class="serve-mix-box"><span id="serveMixFloatValue">50%</span><small>FLOAT</small></div>
+        </div>
         <input id="serveMixRange" class="serve-mix-range" type="range" min="0" max="100" step="1" value="50">
-        <div class="serve-mix-scale"><span>0% SPIN<br><small>100% FLOAT</small></span><span>100% SPIN<br><small>0% FLOAT</small></span></div>
-        <div class="serve-mix-actions"><button type="button" class="btn" data-mix-cancel>Annulla</button><button type="button" class="btn primary" id="serveMixConfirm">USA QUESTA PERCENTUALE</button></div>
+        <div class="serve-mix-scale"><span>Più FLOAT</span><span>Più SPIN</span></div>
+        <div class="serve-mix-actions"><button type="button" class="btn" data-mix-cancel>Annulla</button><button type="button" class="btn primary" id="serveMixConfirm">CONFERMA</button></div>
       </div>`;
     document.body.appendChild(wrap);
     const style=document.createElement('style');
     style.textContent=`
-      .serve-mix-modal{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:18px}
+      .serve-mix-modal{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;padding:18px}
       .serve-mix-modal.hidden{display:none}
-      .serve-mix-backdrop{position:absolute;inset:0;background:rgba(2,8,18,.72);backdrop-filter:blur(7px)}
-      .serve-mix-card{position:relative;width:min(520px,100%);background:linear-gradient(180deg,#0e1d2d,#091521);border:1px solid #284966;border-radius:22px;padding:22px;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+      .serve-mix-backdrop{position:absolute;inset:0;background:rgba(1,7,15,.78);backdrop-filter:blur(8px)}
+      .serve-mix-card{position:relative;width:min(520px,100%);background:#0b1a29;border:1px solid #31506b;border-radius:22px;padding:24px;box-shadow:0 28px 90px rgba(0,0,0,.55)}
       .serve-mix-kicker{font-size:.74rem;font-weight:900;letter-spacing:.13em;color:#8fbce8}
-      .serve-mix-card h3{font-size:1.45rem;margin:6px 0 8px}
-      .serve-mix-text{color:#c5d5e6;margin:0 0 18px;line-height:1.5}
-      .serve-mix-value{display:flex;align-items:baseline;gap:8px;margin:6px 0 12px}
-      .serve-mix-value span{font-size:3rem;font-weight:900;line-height:1;color:#fff}
-      .serve-mix-value small{font-size:1rem;color:#9ab2c9;font-weight:800}
-      .serve-mix-range{width:100%;accent-color:#b9d91b;cursor:pointer}
-      .serve-mix-scale{display:flex;justify-content:space-between;gap:12px;margin-top:8px;color:#9eb4c8;font-weight:800;font-size:.82rem}
-      .serve-mix-scale span:last-child{text-align:right}
-      .serve-mix-scale small{font-weight:600;color:#6f899f}
+      .serve-mix-card h3{font-size:1.5rem;margin:6px 0 8px}
+      .serve-mix-text{color:#c7d7e7;margin:0 0 18px;line-height:1.5}
+      .serve-mix-split{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 16px}
+      .serve-mix-box{background:#102537;border:1px solid #294962;border-radius:16px;padding:14px;text-align:center}
+      .serve-mix-box span{display:block;font-size:2rem;font-weight:900;line-height:1;color:#fff}
+      .serve-mix-box small{display:block;margin-top:5px;font-weight:900;letter-spacing:.08em;color:#9eb7cc}
+      .serve-mix-range{width:100%;accent-color:#b8d61f;cursor:pointer}
+      .serve-mix-scale{display:flex;justify-content:space-between;margin-top:7px;color:#819bb1;font-size:.8rem;font-weight:800}
       .serve-mix-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px;flex-wrap:wrap}
-      @media(max-width:560px){.serve-mix-card{padding:18px;border-radius:18px}.serve-mix-value span{font-size:2.6rem}.serve-mix-actions .btn{flex:1}}
+      @media(max-width:560px){.serve-mix-card{padding:18px;border-radius:18px}.serve-mix-actions .btn{flex:1}}
     `;
     document.head.appendChild(style);
   }
@@ -56,13 +68,14 @@
       const modal=document.querySelector('#serveMixModal');
       const text=modal.querySelector('#serveMixText');
       const range=modal.querySelector('#serveMixRange');
-      const value=modal.querySelector('#serveMixSpinValue');
+      const spin=modal.querySelector('#serveMixSpinValue');
+      const flt=modal.querySelector('#serveMixFloatValue');
       const confirm=modal.querySelector('#serveMixConfirm');
-      text.innerHTML=`<b>${esc(name)}</b> alterna SPIN e FLOAT.<br>Che percentuale di battute <b>SPIN</b> vuoi considerare?`;
+      text.innerHTML=`<b>${esc(name)}</b> alterna SPIN e FLOAT.<br>Scegli la percentuale che vuoi considerare per questo match-up.`;
       range.value=String(def);
-      value.textContent=String(def);
+      const update=()=>{const v=Number(range.value);spin.textContent=`${v}%`;flt.textContent=`${100-v}%`};
+      update();
       modal.classList.remove('hidden');
-      const update=()=>value.textContent=range.value;
       range.addEventListener('input',update);
       const cleanup=(result)=>{
         range.removeEventListener('input',update);

@@ -70,12 +70,12 @@
 
   function courtGrid(zones,kind){
     return '<div class="mg-court '+kind+'">'+
-      '<div class="mg-zone z4">'+zones[4]+'</div>'+
-      '<div class="mg-zone z3">'+zones[3]+'</div>'+
-      '<div class="mg-zone z2">'+zones[2]+'</div>'+
-      '<div class="mg-zone z5">'+zones[5]+'</div>'+
-      '<div class="mg-zone z6">'+zones[6]+'</div>'+
       '<div class="mg-zone z1">'+zones[1]+'</div>'+
+      '<div class="mg-zone z6">'+zones[6]+'</div>'+
+      '<div class="mg-zone z5">'+zones[5]+'</div>'+
+      '<div class="mg-zone z2">'+zones[2]+'</div>'+
+      '<div class="mg-zone z3">'+zones[3]+'</div>'+
+      '<div class="mg-zone z4">'+zones[4]+'</div>'+
     '</div>';
   }
 
@@ -114,7 +114,7 @@
       .mg-rot-label.bottom span{background:#fff;color:#102030}
       .mg-server{height:42px;display:flex;justify-content:center;align-items:center;gap:7px;color:#fff}
       .mg-server small{font-size:.62rem;letter-spacing:.08em;font-weight:900;opacity:.82}
-      .mg-court{display:grid;grid-template-columns:repeat(3,1fr);grid-template-areas:"z4 z3 z2" "z5 z6 z1";border:2px solid #0a1824;min-height:112px}
+      .mg-court{display:grid;grid-template-columns:repeat(3,1fr);grid-template-areas:"z1 z6 z5" "z2 z3 z4";border:2px solid #0a1824;min-height:112px}
       .mg-zone{min-height:55px;display:grid;place-items:center;border-right:1px solid rgba(5,15,25,.32);border-bottom:1px solid rgba(5,15,25,.32);font-weight:900}
       .mg-zone:nth-child(3n){border-right:0}.mg-zone:nth-child(n+4){border-bottom:0}
       .z1{grid-area:z1}.z2{grid-area:z2}.z3{grid-area:z3}.z4{grid-area:z4}.z5{grid-area:z5}.z6{grid-area:z6}

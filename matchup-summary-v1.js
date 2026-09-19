@@ -176,7 +176,8 @@
       const line=q.askOurPhase==='serve'
         ?`NOI battiamo in ${pair.our_rotation} · LORO ricevono in ${pair.opp_rotation}`
         :`NOI riceviamo in ${pair.our_rotation} · LORO battono in ${pair.opp_rotation}`;
-      root.innerHTML=`<div class="answer-card"><span>SE PARTIAMO COSÌ</span><strong style="font-size:1.25rem">${line}</strong><div style="margin-top:10px"><b>PROIEZIONE SET:</b> <span style="font-size:1.3rem;font-weight:800">${esc(pair.projected_score||'—')}</span></div><p style="margin:10px 0 0"><b>Nota AI:</b> ${esc(note(pair,d))}</p></div>`;
+      root.innerHTML=`<div class="answer-card"><span>SE PARTIAMO COSÌ</span><strong style="font-size:1.25rem">${line}</strong><div style="margin-top:10px"><b>PROIEZIONE SET:</b> <span style="font-size:1.3rem;font-weight:800">${esc(pair.projected_score||'—')}</span></div><p style="margin:10px 0 0"><b>Nota AI:</b> ${esc(note(pair,d))}</p></div><div id="matchupGraphicRoot"></div>`;
+      if(window.renderMatchupGraphic)window.renderMatchupGraphic(root.querySelector('#matchupGraphicRoot'),pair);
     }catch(err){root.innerHTML=`<p class="muted">${esc(err.message)}</p>`}
   }
 

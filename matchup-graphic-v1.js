@@ -2,7 +2,14 @@
 (function(){
   const ROTS=['P1','P6','P5','P4','P3','P2'];
   const SERVE_SLOT={P1:'P',P6:'S1',P5:'C2',P4:'O',P3:'S2',P2:'C1'};
-  const BASE=['P','S1','C2','O','S2','C1']; // Z1..Z6 in P1
+  const ROTATION_ZONES={
+    P1:{1:'P',2:'S1',3:'C2',4:'O',5:'S2',6:'C1'},
+    P6:{1:'S1',2:'C2',3:'O',4:'S2',5:'C1',6:'P'},
+    P5:{1:'C2',2:'O',3:'S2',4:'C1',5:'P',6:'S1'},
+    P4:{1:'O',2:'S2',3:'C1',4:'P',5:'S1',6:'C2'},
+    P3:{1:'S2',2:'C1',3:'P',4:'S1',5:'C2',6:'O'},
+    P2:{1:'C1',2:'P',3:'S1',4:'C2',5:'O',6:'S2'}
+  };
 
   function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
   function teamById(id){return state.teams.find(t=>t.id===id)}
@@ -14,8 +21,7 @@
   function shortName(s){return String(s||'').replace(/^Sir Susa Scai /i,'').replace(/^Itas /i,'').trim()}
 
   function roleAtZone(rot,z){
-    const i=ROTS.indexOf(rot);
-    return BASE[(z-1+i+6)%6];
+    return ROTATION_ZONES[rot]?.[z]||'';
   }
   function isFrontZone(z){return z===2||z===3||z===4}
   function isMiddle(slot){return slot==='C1'||slot==='C2'}

@@ -123,6 +123,9 @@
       .z1{grid-area:z1}.z2{grid-area:z2}.z3{grid-area:z3}.z4{grid-area:z4}.z5{grid-area:z5}.z6{grid-area:z6}
       .mg-break{background:#fff700;color:#050505}
       .mg-receive{background:#d7d9dc;color:#07111f}
+      .mg-receive .mg-zone{border-right:1px solid rgba(20,32,45,.38);border-bottom:1px solid rgba(20,32,45,.38)}
+      .mg-receive .mg-zone:nth-child(3n){border-right:0}
+      .mg-receive .mg-zone:nth-child(n+4){border-bottom:0}
       .mg-net{text-align:center;background:#10283a;color:#f5f7fa;font-size:.62rem;font-weight:900;letter-spacing:.18em;padding:4px 0}
       .mg-receive-wrap>.mg-net-top{margin-top:0}
       .mg-token{min-width:30px;min-height:30px;padding:4px 6px;display:inline-grid;place-items:center;border-radius:3px;font-size:1rem;font-weight:950}

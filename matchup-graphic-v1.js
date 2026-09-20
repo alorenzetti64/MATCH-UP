@@ -93,7 +93,7 @@
       (bp.serverHtml?'<div class="mg-server"><small>BATTUTA</small>'+bp.serverHtml+'</div>':'')+
       courtGrid(bp.zones,'mg-break')+
       '<div class="mg-net">RETE</div>'+
-      courtGrid(rx,'mg-receive')+
+      '<div class="mg-receive-wrap"><div class="mg-net mg-net-top">RETE</div>'+courtGrid(rx,'mg-receive')+'</div>'+
       '<div class="mg-rot-label bottom"><span>'+esc(receiveRot)+'</span><b>'+esc(shortName(teamName(receiveTeam)))+' RIC.</b></div>'+
     '</article>';
   }
@@ -114,13 +114,16 @@
       .mg-rot-label.bottom span{background:#fff;color:#102030}
       .mg-server{height:42px;display:flex;justify-content:center;align-items:center;gap:7px;color:#fff}
       .mg-server small{font-size:.62rem;letter-spacing:.08em;font-weight:900;opacity:.82}
-      .mg-court{display:grid;grid-template-columns:repeat(3,1fr);grid-template-areas:"z1 z6 z5" "z2 z3 z4";border:2px solid #0a1824;min-height:112px}
+      .mg-court{display:grid;grid-template-columns:repeat(3,1fr);border:2px solid #0a1824;min-height:112px}
+      .mg-break{grid-template-areas:"z1 z6 z5" "z2 z3 z4"}
+      .mg-receive{grid-template-areas:"z4 z3 z2" "z5 z6 z1"}
       .mg-zone{min-height:55px;display:grid;place-items:center;border-right:1px solid rgba(5,15,25,.32);border-bottom:1px solid rgba(5,15,25,.32);font-weight:900}
       .mg-zone:nth-child(3n){border-right:0}.mg-zone:nth-child(n+4){border-bottom:0}
       .z1{grid-area:z1}.z2{grid-area:z2}.z3{grid-area:z3}.z4{grid-area:z4}.z5{grid-area:z5}.z6{grid-area:z6}
       .mg-break{background:#fff700;color:#050505}
       .mg-receive{background:#d7d9dc;color:#07111f}
       .mg-net{text-align:center;background:#10283a;color:#f5f7fa;font-size:.62rem;font-weight:900;letter-spacing:.18em;padding:4px 0}
+      .mg-receive-wrap>.mg-net-top{margin-top:0}
       .mg-token{min-width:30px;min-height:30px;padding:4px 6px;display:inline-grid;place-items:center;border-radius:3px;font-size:1rem;font-weight:950}
       .mg-setter{border:3px solid #050505;background:rgba(255,255,255,.3)}
       .mg-lib{font-size:.82rem;text-decoration:underline;text-underline-offset:2px}

@@ -122,7 +122,11 @@
       .mg-zone:nth-child(3n){border-right:0}.mg-zone:nth-child(n+4){border-bottom:0}
       .z1{grid-area:z1}.z2{grid-area:z2}.z3{grid-area:z3}.z4{grid-area:z4}.z5{grid-area:z5}.z6{grid-area:z6}
       .mg-break{background:#fff700;color:#050505}
-      .mg-receive{background:#d7d9dc;color:#07111f}
+      .mg-receive{background:
+        linear-gradient(to right,transparent calc(33.333% - .75px),rgba(20,32,45,.42) calc(33.333% - .75px),rgba(20,32,45,.42) calc(33.333% + .75px),transparent calc(33.333% + .75px)),
+        linear-gradient(to right,transparent calc(66.666% - .75px),rgba(20,32,45,.42) calc(66.666% - .75px),rgba(20,32,45,.42) calc(66.666% + .75px),transparent calc(66.666% + .75px)),
+        linear-gradient(to bottom,transparent calc(50% - .75px),rgba(20,32,45,.42) calc(50% - .75px),rgba(20,32,45,.42) calc(50% + .75px),transparent calc(50% + .75px)),
+        #d7d9dc;color:#07111f}
       .mg-receive .mg-zone{border-right:1px solid rgba(20,32,45,.38);border-bottom:1px solid rgba(20,32,45,.38)}
       .mg-receive .mg-zone:nth-child(3n){border-right:0}
       .mg-receive .mg-zone:nth-child(n+4){border-bottom:0}

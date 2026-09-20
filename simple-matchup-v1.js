@@ -26,7 +26,7 @@
 
   function lineupBlock(side,t,lineup){
     const name=side==='our'?'NOI':'LORO';
-    return `<div class="panel" style="padding:14px"><div class="eyebrow">SESTETTO PARTITA · ${name}</div><h3 style="margin-top:4px">${e(t?.name||'Seleziona squadra')}</h3><div class="lineup-editor">${SLOTS.map(slot=>{
+    return `<div class="panel match-lineup-card match-lineup-${side}"><div class="match-lineup-head"><div><div class="eyebrow">SESTETTO PARTITA · ${name}</div><h3>${e(t?.name||'Seleziona squadra')}</h3></div><span class="match-side-pill">${side==='our'?'NOI':'AVVERSARI'}</span></div><div class="lineup-editor">${SLOTS.map(slot=>{
       const role=SLOT_ROLE[slot];
       const ps=(t?.roster||[]).filter(p=>p.role===role);
       return `<label class="lineup-slot"><b>${slot}</b><select data-lineup-side="${side}" data-lineup-slot="${slot}"><option value="">—</option>${ps.map(p=>`<option value="${p.id}" ${lineup?.[slot]===p.id?'selected':''}>${e(playerLabel2(t,p.id))}</option>`).join('')}</select></label>`
@@ -115,36 +115,51 @@
     const us=teamById(state.match.ourTeamId), them=teamById(state.match.oppTeamId), q=state.match.simple;
 
     root.innerHTML=`
-      <div class="section-head"><div><div class="eyebrow">NUOVA PARTITA</div><h2>Imposta e chiedi</h2></div></div>
-      <div class="panel">
-        <div class="form-grid two"><label>Stagione<select id="smSeason">${options(state.seasons,sid,s=>s.name)}</select></label><label>Competizione<select id="smComp">${options(comps,cid,c=>c.name)}</select></label></div>
-        <div class="form-grid two"><label>NOI<select id="smUs">${options(teams,state.match.ourTeamId,t=>t.name)}</select></label><label>LORO<select id="smThem">${options(teams,state.match.oppTeamId,t=>t.name)}</select></label></div>
-      </div>
-      <div class="lineup-pair">${lineupBlock('our',us,state.match.ourLineup)}${lineupBlock('opp',them,state.match.oppLineup)}</div>
+      <div class="match-page">
+        <div class="section-head match-page-head"><div><div class="eyebrow">PARTITA</div><h2>Prepara il match-up</h2><p class="muted match-page-sub">Sestetti, rotazioni e incroci in un'unica schermata.</p></div></div>
 
-      <div class="panel" style="margin-top:14px">
-        <div class="eyebrow">1 · MIGLIOR MATCH-UP</div><h3>Quando battiamo / quando riceviamo</h3>
-        <p class="muted">Scegli i due sestetti. MATCH-UP usa i rally reali 2025/26 e, per ogni loro rotazione iniziale, ti indica la nostra partenza con il valore statistico più alto.</p>
-        <div class="form-grid two"><button class="btn wide" id="bestServe">MIGLIOR MATCH-UP · BATTUTA</button><button class="btn wide" id="bestReceive">MIGLIOR MATCH-UP · RICEZIONE</button></div>
-        <div id="bestAnswer" class="answer-card" style="margin-top:10px"><span>RISPOSTA</span><strong>Scegli un pulsante</strong></div>
-      </div>
+        <div class="panel match-setup-panel">
+          <div class="match-setup-grid">
+            <label>Stagione<select id="smSeason">${options(state.seasons,sid,s=>s.name)}</select></label>
+            <label>Competizione<select id="smComp">${options(comps,cid,c=>c.name)}</select></label>
+          </div>
+          <div class="match-versus">
+            <label><span>NOI</span><select id="smUs">${options(teams,state.match.ourTeamId,t=>t.name)}</select></label>
+            <div class="match-vs">VS</div>
+            <label><span>AVVERSARI</span><select id="smThem">${options(teams,state.match.oppTeamId,t=>t.name)}</select></label>
+          </div>
+        </div>
 
-      <div class="panel" style="margin-top:14px">
-        <div class="eyebrow">2 · SE PARTIAMO COSÌ</div><h3>Cosa succede?</h3>
-        <div class="form-grid two"><label>NOI · fase<select id="smAskPhase"><option value="serve" ${q.askOurPhase==='serve'?'selected':''}>BATTUTA</option><option value="receive" ${q.askOurPhase==='receive'?'selected':''}>RICEZIONE</option></select></label><label>NOI · rotazione<select id="smAskOurRot">${rotOptions(q.askOurRotation)}</select></label></div>
-        <div class="form-grid two"><label>LORO · fase<input value="${phaseLabel(opposite(q.askOurPhase))}" disabled></label><label>LORO · rotazione<select id="smAskOppRot">${rotOptions(q.askOppRotation)}</select></label></div>
-        <button class="btn primary wide" id="smShowCycle">MOSTRA COSA SUCCEDE</button>
-        <div id="smCycleAnswer" style="margin-top:12px"></div>
-      </div>
+        <div class="lineup-pair match-lineups">${lineupBlock('our',us,state.match.ourLineup)}${lineupBlock('opp',them,state.match.oppLineup)}</div>
 
-      <div class="panel" style="margin-top:14px">
-        <div class="eyebrow">3 · COME DEVO PARTIRE?</div><h3>Loro partono così. Io voglio ottenere questo incrocio.</h3>
-        <div class="form-grid two"><label>LORO partono in<select id="smInvOppPhase"><option value="serve" ${q.invOppPhase==='serve'?'selected':''}>BATTUTA</option><option value="receive" ${q.invOppPhase==='receive'?'selected':''}>RICEZIONE</option></select></label><label>LORO · rotazione iniziale<select id="smInvOppStartRot">${rotOptions(q.invOppStartRotation)}</select></label></div>
-        <hr>
-        <div class="form-grid two"><label>Voglio NOI in<select id="smInvOurPhase"><option value="serve" ${q.invDesiredOurPhase==='serve'?'selected':''}>BATTUTA</option><option value="receive" ${q.invDesiredOurPhase==='receive'?'selected':''}>RICEZIONE</option></select></label><label>NOI · rotazione desiderata<select id="smInvOurRot">${rotOptions(q.invDesiredOurRotation)}</select></label></div>
-        <div class="form-grid two"><label>LORO saranno in<input id="smInvOppPhaseLabel" value="${phaseLabel(opposite(q.invDesiredOurPhase))}" disabled></label><label>LORO · rotazione desiderata<select id="smInvOppRot">${rotOptions(q.invDesiredOppRotation)}</select></label></div>
-        <button class="btn primary wide" id="smSolve">DIMMI COME DEVO PARTIRE</button>
-        <div id="smInverseAnswer" class="answer-card" style="margin-top:10px"><span>RISPOSTA</span><strong>—</strong></div>
+        <div class="panel match-tool-card">
+          <div class="match-tool-head"><span class="match-step">1</span><div><div class="eyebrow">MIGLIOR MATCH-UP</div><h3>Qual è la partenza migliore?</h3></div></div>
+          <p class="muted">Confronta le 12 situazioni usando i rally reali 2025/26.</p>
+          <div class="match-action-grid"><button class="btn wide match-action-btn serve-choice" id="bestServe">BATTUTA</button><button class="btn wide match-action-btn receive-choice" id="bestReceive">RICEZIONE</button></div>
+          <div id="bestAnswer" class="answer-card match-answer"><span>RISPOSTA</span><strong>Scegli Battuta o Ricezione</strong></div>
+        </div>
+
+        <div class="panel match-tool-card">
+          <div class="match-tool-head"><span class="match-step">2</span><div><div class="eyebrow">SE PARTIAMO COSÌ</div><h3>Cosa succede?</h3></div></div>
+          <div class="match-two-sides">
+            <div class="match-side-box"><div class="side-label">NOI</div><div class="form-grid two"><label>Fase<select id="smAskPhase"><option value="serve" ${q.askOurPhase==='serve'?'selected':''}>BATTUTA</option><option value="receive" ${q.askOurPhase==='receive'?'selected':''}>RICEZIONE</option></select></label><label>Rotazione<select id="smAskOurRot">${rotOptions(q.askOurRotation)}</select></label></div></div>
+            <div class="match-side-box"><div class="side-label">AVVERSARI</div><div class="form-grid two"><label>Fase<input value="${phaseLabel(opposite(q.askOurPhase))}" disabled></label><label>Rotazione<select id="smAskOppRot">${rotOptions(q.askOppRotation)}</select></label></div></div>
+          </div>
+          <button class="btn primary wide match-main-cta" id="smShowCycle">MOSTRA COSA SUCCEDE</button>
+          <div id="smCycleAnswer" class="match-cycle-answer"></div>
+        </div>
+
+        <div class="panel match-tool-card">
+          <div class="match-tool-head"><span class="match-step">3</span><div><div class="eyebrow">COME DEVO PARTIRE?</div><h3>Costruisci l'incrocio che vuoi</h3></div></div>
+          <div class="match-side-box"><div class="side-label">PARTENZA AVVERSARI</div><div class="form-grid two"><label>Fase<select id="smInvOppPhase"><option value="serve" ${q.invOppPhase==='serve'?'selected':''}>BATTUTA</option><option value="receive" ${q.invOppPhase==='receive'?'selected':''}>RICEZIONE</option></select></label><label>Rotazione<select id="smInvOppStartRot">${rotOptions(q.invOppStartRotation)}</select></label></div></div>
+          <div class="match-target-label">VOGLIO OTTENERE</div>
+          <div class="match-two-sides">
+            <div class="match-side-box"><div class="side-label">NOI</div><div class="form-grid two"><label>Fase<select id="smInvOurPhase"><option value="serve" ${q.invDesiredOurPhase==='serve'?'selected':''}>BATTUTA</option><option value="receive" ${q.invDesiredOurPhase==='receive'?'selected':''}>RICEZIONE</option></select></label><label>Rotazione<select id="smInvOurRot">${rotOptions(q.invDesiredOurRotation)}</select></label></div></div>
+            <div class="match-side-box"><div class="side-label">AVVERSARI</div><div class="form-grid two"><label>Fase<input id="smInvOppPhaseLabel" value="${phaseLabel(opposite(q.invDesiredOurPhase))}" disabled></label><label>Rotazione<select id="smInvOppRot">${rotOptions(q.invDesiredOppRotation)}</select></label></div></div>
+          </div>
+          <button class="btn primary wide match-main-cta" id="smSolve">DIMMI COME DEVO PARTIRE</button>
+          <div id="smInverseAnswer" class="answer-card match-answer"><span>RISPOSTA</span><strong>—</strong></div>
+        </div>
       </div>`;
 
     smSeason.onchange=()=>{state.match.seasonId=smSeason.value;state.match.competitionId='';state.match.ourTeamId=null;state.match.oppTeamId=null;engineCache=null;save();renderSimpleMatch()};

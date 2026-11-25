@@ -134,7 +134,7 @@
 
         <div class="panel match-tool-card">
           <div class="match-tool-head"><span class="match-step">1</span><div><div class="eyebrow">MIGLIOR MATCH-UP</div><h3>Qual è la partenza migliore?</h3></div></div>
-          <p class="muted">Confronta le 12 situazioni usando i rally reali 2025/26.</p>
+          <p class="muted">Confronta le 12 situazioni usando i rally reali della stagione selezionata.</p>
           <div class="match-action-grid"><button class="btn wide match-action-btn serve-choice" id="bestServe">BATTUTA</button><button class="btn wide match-action-btn receive-choice" id="bestReceive">RICEZIONE</button></div>
           <div id="bestAnswer" class="answer-card match-answer"><span>RISPOSTA</span><strong>Scegli Battuta o Ricezione</strong></div>
         </div>

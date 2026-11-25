@@ -95,12 +95,14 @@
     const us=team(state.match.ourTeamId),them=team(state.match.oppTeamId);
     if(!us||!them)throw new Error('Scegli prima entrambe le squadre.');
     if(!complete(us,state.match.ourLineup)||!complete(them,state.match.oppLineup))throw new Error('Completa prima i due sestetti.');
-    if(!String(season(state.match.seasonId)?.name||'').includes('2025'))throw new Error('Per questo test seleziona 2025/26.');
-    const payload={our_team:us.name,opp_team:them.name,our_lineup:numbers(us,state.match.ourLineup),opp_lineup:numbers(them,state.match.oppLineup),serve_mix:mixStore()};
-    const key=JSON.stringify(payload);if(cache&&cacheKey===key)return cache;
-    const r=await fetch(ENGINE,{method:'POST',headers:{'Content-Type':'application/json'},body:key});
-    const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error('Il motore statistico non risponde in questo momento.');
-    cache=d;cacheKey=key;return d;
+    const selectedSeason=String(season(state.match.seasonId)?.name||'');
+    const current=selectedSeason.includes('2026')&&!selectedSeason.includes('2025');
+    if(!current&&!selectedSeason.includes('2025'))throw new Error('Seleziona 2025/26 o 2026/27.');
+    const payload={season:current?'2026/27':'2025/26',our_team:us.name,opp_team:them.name,our_lineup:numbers(us,state.match.ourLineup),opp_lineup:numbers(them,state.match.oppLineup),serve_mix:mixStore()};
+    const key=JSON.stringify(payload);if(!current&&cache&&cacheKey===key)return cache;
+    const r=await fetch(current?'/api/matchup-neon':ENGINE,{method:'POST',headers:{'Content-Type':'application/json'},body:key});
+    const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(({team_not_found:'Squadra non riconosciuta nei dati scout della stagione.',insufficient_rotation_data:'Dati insufficienti per almeno una rotazione dei sestetti selezionati.',not_configured:'Collegamento Neon non configurato.',database_unavailable:'Collegamento ai dati Neon non disponibile.'})[d.error]||'Il motore statistico non risponde in questo momento.');
+    d.season=payload.season;cache=d;cacheKey=key;return d;
   }
 
   async function askMixedIfNeeded(d){
@@ -155,14 +157,14 @@
 
   async function conciseBest(phase){
     const box=document.querySelector('#bestAnswer');if(!box)return;
-    box.innerHTML='<span>RISPOSTA</span><strong>Calcolo sui dati 2025/26…</strong>';
+    box.innerHTML='<span>RISPOSTA</span><strong>Calcolo sui dati della stagione selezionata…</strong>';
     try{
       let d=await callEngine();d=await askMixedIfNeeded(d);
       const best=d.best?.[phase],worst=d.worst?.[phase];
       box.innerHTML=`<span>${phase==='serve'?'PARTENZA IN BATTUTA':'PARTENZA IN RICEZIONE'}</span>
         ${card('MIGLIOR MATCH-UP',best,phase,d,'best')}
         ${card('PEGGIOR MATCH-UP',worst,phase,d,'worst')}
-        <small style="display:block;margin-top:12px">La proiezione del set è indicativa: usa i 12 passaggi del match-up e i rendimenti storici 2025/26. Non è una previsione certa del punteggio.</small>`;
+        <small style="display:block;margin-top:12px">La proiezione del set è indicativa: usa i 12 passaggi del match-up e i rendimenti della stagione ${esc(d.season)}. Non è una previsione certa del punteggio.</small>`;
     }catch(err){box.innerHTML=`<span>RISPOSTA</span><strong>${esc(err.message)}</strong>`}
   }
 
